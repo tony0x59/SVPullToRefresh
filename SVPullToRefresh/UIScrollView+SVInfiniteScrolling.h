@@ -43,5 +43,6 @@ typedef NSUInteger SVInfiniteScrollingState;
 
 - (void)startAnimating;
 - (void)stopAnimating;
+- (void)graceStopAnimating;
 
 @end

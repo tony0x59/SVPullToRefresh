@@ -61,7 +61,7 @@
         [weakSelf.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:0]] withRowAnimation:UITableViewRowAnimationBottom];
         [weakSelf.tableView endUpdates];
         
-        [weakSelf.tableView.pullToRefreshView stopAnimating];
+        [weakSelf.tableView.pullToRefreshView graceStopAnimating];
     });
 }
 
@@ -77,7 +77,7 @@
         [weakSelf.tableView insertRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:weakSelf.dataSource.count-1 inSection:0]] withRowAnimation:UITableViewRowAnimationTop];
         [weakSelf.tableView endUpdates];
         
-        [weakSelf.tableView.infiniteScrollingView stopAnimating];
+        [weakSelf.tableView.infiniteScrollingView graceStopAnimating];
     });
 }
 #pragma mark -

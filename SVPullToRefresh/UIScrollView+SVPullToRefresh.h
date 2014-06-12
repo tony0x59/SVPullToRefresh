@@ -57,6 +57,7 @@ typedef NS_ENUM(NSUInteger, SVPullToRefreshState) {
 
 - (void)startAnimating;
 - (void)stopAnimating;
+- (void)graceStopAnimating;
 
 // deprecated; use setSubtitle:forState: instead
 @property (nonatomic, strong, readonly) UILabel *dateLabel DEPRECATED_ATTRIBUTE;

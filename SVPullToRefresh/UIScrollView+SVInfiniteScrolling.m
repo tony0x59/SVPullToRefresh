@@ -253,11 +253,12 @@ UIEdgeInsets scrollViewOriginalContentInsets;
 }
 
 - (void)stopAnimating {
+    self.state = SVInfiniteScrollingStateStopped;
+}
+
+- (void)graceStopAnimating {
     NSTimeInterval delayTime = MAX(self.graceTime - ([NSDate timeIntervalSinceReferenceDate] - self.lastRefreshTime), 0.f);
-    dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayTime * NSEC_PER_SEC));
-    dispatch_after(delay, dispatch_get_main_queue(), ^{
-        self.state = SVInfiniteScrollingStateStopped;
-    });
+    [self performSelector:@selector(stopAnimating) withObject:nil afterDelay:delayTime];
 }
 
 - (void)setState:(SVInfiniteScrollingState)newState {
