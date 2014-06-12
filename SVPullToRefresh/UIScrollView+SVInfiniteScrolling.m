@@ -32,6 +32,7 @@ static CGFloat const SVInfiniteScrollingViewHeight = 60;
 @property (nonatomic, readwrite) CGFloat originalBottomInset;
 @property (nonatomic, assign) BOOL wasTriggeredByUser;
 @property (nonatomic, assign) BOOL isObserving;
+@property (nonatomic, assign) NSTimeInterval lastRefreshTime;
 
 - (void)resetScrollViewContentInset;
 - (void)setScrollViewContentInsetForInfiniteScrolling;
@@ -252,7 +253,11 @@ UIEdgeInsets scrollViewOriginalContentInsets;
 }
 
 - (void)stopAnimating {
-    self.state = SVInfiniteScrollingStateStopped;
+    NSTimeInterval delayTime = MAX(self.graceTime - ([NSDate timeIntervalSinceReferenceDate] - self.lastRefreshTime), 0.f);
+    dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayTime * NSEC_PER_SEC));
+    dispatch_after(delay, dispatch_get_main_queue(), ^{
+        self.state = SVInfiniteScrollingStateStopped;
+    });
 }
 
 - (void)setState:(SVInfiniteScrollingState)newState {
@@ -297,8 +302,10 @@ UIEdgeInsets scrollViewOriginalContentInsets;
         }
     }
     
-    if(previousState == SVInfiniteScrollingStateTriggered && newState == SVInfiniteScrollingStateLoading && self.infiniteScrollingHandler && self.enabled)
+    if(previousState == SVInfiniteScrollingStateTriggered && newState == SVInfiniteScrollingStateLoading && self.infiniteScrollingHandler && self.enabled) {
+        self.lastRefreshTime = [NSDate timeIntervalSinceReferenceDate];
         self.infiniteScrollingHandler();
+    }
 }
 
 @end

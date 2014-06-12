@@ -45,7 +45,9 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 @property (nonatomic, assign) BOOL wasTriggeredByUser;
 @property (nonatomic, assign) BOOL showsPullToRefresh;
 @property (nonatomic, assign) BOOL showsDateLabel;
-@property(nonatomic, assign) BOOL isObserving;
+@property (nonatomic, assign) BOOL isObserving;
+
+@property (nonatomic, assign) NSTimeInterval lastRefreshTime;
 
 - (void)resetScrollViewContentInset;
 - (void)setScrollViewContentInsetForLoading;
@@ -615,18 +617,22 @@ static char UIScrollViewPullToRefreshView;
 }
 
 - (void)stopAnimating {
-    self.state = SVPullToRefreshStateStopped;
-    
-    switch (self.position) {
-        case SVPullToRefreshPositionTop:
-            if(!self.wasTriggeredByUser)
-                [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, -self.originalTopInset) animated:YES];
-            break;
-        case SVPullToRefreshPositionBottom:
-            if(!self.wasTriggeredByUser)
-                [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, self.scrollView.contentSize.height - self.scrollView.bounds.size.height + self.originalBottomInset) animated:YES];
-            break;
-    }
+    NSTimeInterval delayTime = MAX(self.graceTime - ([NSDate timeIntervalSinceReferenceDate] - self.lastRefreshTime), 0.f);
+    dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayTime * NSEC_PER_SEC));
+    dispatch_after(delay, dispatch_get_main_queue(), ^{
+        self.state = SVPullToRefreshStateStopped;
+        
+        switch (self.position) {
+            case SVPullToRefreshPositionTop:
+                if(!self.wasTriggeredByUser)
+                    [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, -self.originalTopInset) animated:YES];
+                break;
+            case SVPullToRefreshPositionBottom:
+                if(!self.wasTriggeredByUser)
+                    [self.scrollView setContentOffset:CGPointMake(self.scrollView.contentOffset.x, self.scrollView.contentSize.height - self.scrollView.bounds.size.height + self.originalBottomInset) animated:YES];
+                break;
+        }
+    });
 }
 
 - (void)setState:(SVPullToRefreshState)newState {
@@ -652,8 +658,10 @@ static char UIScrollViewPullToRefreshView;
         case SVPullToRefreshStateLoading:
             [self setScrollViewContentInsetForLoading];
             
-            if(previousState == SVPullToRefreshStateTriggered && pullToRefreshActionHandler)
+            if(previousState == SVPullToRefreshStateTriggered && pullToRefreshActionHandler) {
+                self.lastRefreshTime = [NSDate timeIntervalSinceReferenceDate];
                 pullToRefreshActionHandler();
+            }
             
             break;
     }
