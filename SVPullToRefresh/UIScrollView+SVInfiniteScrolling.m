@@ -155,6 +155,21 @@ UIEdgeInsets scrollViewOriginalContentInsets;
 
 - (void)layoutSubviews {
     self.activityIndicatorView.center = CGPointMake(self.bounds.size.width/2, self.bounds.size.height/2);
+    
+    for(id otherView in self.viewForState) {
+        if([otherView isKindOfClass:[UIView class]])
+            [otherView removeFromSuperview];
+    }
+    
+    id customView = [self.viewForState objectAtIndex:self.state];
+    BOOL hasCustomView = [customView isKindOfClass:[UIView class]];
+    
+    if(hasCustomView) {
+        [self addSubview:customView];
+        CGRect viewBounds = [customView bounds];
+        CGPoint origin = CGPointMake(roundf((self.bounds.size.width-viewBounds.size.width)/2), roundf((self.bounds.size.height-viewBounds.size.height)/2));
+        [customView setFrame:CGRectMake(origin.x, origin.y, viewBounds.size.width, viewBounds.size.height)];
+    }
 }
 
 #pragma mark - Scroll View
@@ -269,19 +284,11 @@ UIEdgeInsets scrollViewOriginalContentInsets;
     SVInfiniteScrollingState previousState = _state;
     _state = newState;
     
-    for(id otherView in self.viewForState) {
-        if([otherView isKindOfClass:[UIView class]])
-            [otherView removeFromSuperview];
-    }
-    
     id customView = [self.viewForState objectAtIndex:newState];
     BOOL hasCustomView = [customView isKindOfClass:[UIView class]];
     
     if(hasCustomView) {
-        [self addSubview:customView];
-        CGRect viewBounds = [customView bounds];
-        CGPoint origin = CGPointMake(roundf((self.bounds.size.width-viewBounds.size.width)/2), roundf((self.bounds.size.height-viewBounds.size.height)/2));
-        [customView setFrame:CGRectMake(origin.x, origin.y, viewBounds.size.width, viewBounds.size.height)];
+        [self setNeedsLayout];
     }
     else {
         CGRect viewBounds = [self.activityIndicatorView bounds];
