@@ -15,8 +15,13 @@
 @synthesize window = _window;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    
+    UIViewController *viewController = [[SVViewController alloc] initWithNibName:@"SVViewController" bundle:nil];
+    
+    UINavigationController *navgationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+    
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    self.window.rootViewController = [[SVViewController alloc] initWithNibName:@"SVViewController" bundle:nil];
+    self.window.rootViewController = navgationController;
     [self.window makeKeyAndVisible];
     return YES;
 }

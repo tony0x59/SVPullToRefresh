@@ -47,7 +47,9 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 @property (nonatomic, assign) BOOL showsDateLabel;
 @property (nonatomic, assign) BOOL isObserving;
 
-@property (nonatomic, assign) NSTimeInterval lastRefreshTime;
+@property (nonatomic, assign) NSTimeInterval lastRefreshTime;   // for graceTime feature
+
+@property (nonatomic, strong) CAShapeLayer *refreshMaskLayer;
 
 - (void)resetScrollViewContentInset;
 - (void)setScrollViewContentInsetForLoading;
@@ -190,6 +192,14 @@ static char UIScrollViewPullToRefreshView;
         self.subtitles = [NSMutableArray arrayWithObjects:@"", @"", @"", @"", nil];
         self.viewForState = [NSMutableArray arrayWithObjects:@"", @"", @"", @"", nil];
         self.wasTriggeredByUser = YES;
+        
+        /* RefreshView mask layer for topInset > 0 scene */
+        self.refreshMaskLayer = [[CAShapeLayer alloc] init];
+        CGRect rect = CGRectMake(0, CGRectGetHeight(self.bounds), CGRectGetWidth(self.bounds), 0);
+        CGPathRef path = CGPathCreateWithRect(rect, NULL);
+        self.refreshMaskLayer.path = path;
+        CGPathRelease(path);
+        self.layer.mask = _refreshMaskLayer;
     }
     
     return self;
@@ -393,6 +403,39 @@ static char UIScrollViewPullToRefreshView;
 }
 
 - (void)scrollViewDidScroll:(CGPoint)contentOffset {
+    
+    /* refreshMaskLayer rect update */
+    CGFloat offsetValue = contentOffset.y + self.originalTopInset;
+    if (offsetValue <= 0) {
+        CGFloat viewHeight = CGRectGetHeight(self.bounds);
+        CGFloat moveLength = - MAX(MIN(offsetValue, 0), - viewHeight);
+        CGFloat maskHeight = moveLength;
+        CGFloat originY = viewHeight - maskHeight;
+        CGRect maskRect = CGRectMake(0, originY, CGRectGetWidth(self.bounds), maskHeight);
+        
+        CGPathRef path = CGPathCreateWithRect(maskRect, NULL);
+        
+        CGRect oldRect = CGRectZero;
+        if (CGPathIsRect(_refreshMaskLayer.path, &oldRect)) {
+            /* solve set contentInset animation not gradually contentOffset value (when stopAnimating) issue */
+            if (ABS(oldRect.size.height - maskRect.size.height) >= viewHeight) {
+                CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"path"];
+                animation.duration = 0.3;   /* from setScrollViewContentInset animation value */
+                animation.fromValue = (__bridge id)(_refreshMaskLayer.path);
+                animation.toValue = (__bridge id)path;
+                animation.timingFunction = [CAMediaTimingFunction
+                                            functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+                
+                _refreshMaskLayer.path = path;
+                [_refreshMaskLayer addAnimation:animation forKey:@"path"];
+            } else {
+                _refreshMaskLayer.path = path;
+            }
+        }
+        
+        CGPathRelease(path);
+    }
+    
     if(self.state != SVPullToRefreshStateLoading) {
         CGFloat scrollOffsetThreshold = 0;
         switch (self.position) {

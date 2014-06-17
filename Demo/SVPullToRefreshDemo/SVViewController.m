@@ -24,6 +24,17 @@
     
     __weak SVViewController *weakSelf = self;
     
+    self.title = @"SVPullToRefreshDemo";
+    
+    // set fully translucent for test
+    [self.navigationController.navigationBar setBackgroundImage:[UIImage new]
+                                                  forBarMetrics:UIBarMetricsDefault];
+    self.navigationController.navigationBar.shadowImage = [UIImage new];
+    self.navigationController.navigationBar.translucent = YES;
+    
+    
+    self.tableView.contentInset = UIEdgeInsetsMake(CGRectGetMaxY(self.navigationController.navigationBar.frame), 0, 0, 0);
+    
     // setup pull-to-refresh
     [self.tableView addPullToRefreshWithActionHandler:^{
         [weakSelf insertRowAtTop];
@@ -101,6 +112,9 @@
     
     NSDate *date = [self.dataSource objectAtIndex:indexPath.row];
     cell.textLabel.text = [NSDateFormatter localizedStringFromDate:date dateStyle:NSDateFormatterNoStyle timeStyle:NSDateFormatterMediumStyle];
+    
+    cell.contentView.backgroundColor = indexPath.row % 2 ? [UIColor magentaColor] : [UIColor greenColor];
+    
     return cell;
 }
 
