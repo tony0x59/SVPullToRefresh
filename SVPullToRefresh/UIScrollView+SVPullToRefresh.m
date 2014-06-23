@@ -27,7 +27,6 @@ static CGFloat const SVPullToRefreshViewHeight = 60;
 
 @property (nonatomic, copy) void (^pullToRefreshActionHandler)(void);
 
-@property (nonatomic, strong) SVPullToRefreshArrow *arrow;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicatorView;
 @property (nonatomic, strong, readwrite) UILabel *titleLabel;
 @property (nonatomic, strong, readwrite) UILabel *subtitleLabel;
@@ -162,7 +161,7 @@ static char UIScrollViewPullToRefreshView;
 @implementation SVPullToRefreshView
 
 // public properties
-@synthesize pullToRefreshActionHandler, arrowColor, textColor, activityIndicatorViewColor, activityIndicatorViewStyle, lastUpdatedDate, dateFormatter;
+@synthesize pullToRefreshActionHandler, textColor, activityIndicatorViewColor, activityIndicatorViewStyle, lastUpdatedDate, dateFormatter;
 
 @synthesize state = _state;
 @synthesize scrollView = _scrollView;
@@ -485,13 +484,16 @@ static char UIScrollViewPullToRefreshView;
 
 #pragma mark - Getters
 
-- (SVPullToRefreshArrow *)arrow {
-    if(!_arrow) {
-		_arrow = [[SVPullToRefreshArrow alloc]initWithFrame:CGRectMake(0, self.bounds.size.height-54, 22, 48)];
-        _arrow.backgroundColor = [UIColor clearColor];
-		[self addSubview:_arrow];
+- (void)setArrow:(UIView *)arrow
+{
+    if (_arrow != arrow) {
+        _arrow = arrow;
+        if (_arrow.frame.size.width == 0 ||
+            _arrow.frame.size.height == 0) {
+            _arrow.frame = CGRectMake(0, 0, 22, 48);
+        }
+        [self addSubview:_arrow];
     }
-    return _arrow;
 }
 
 - (UIActivityIndicatorView *)activityIndicatorView {
@@ -540,10 +542,6 @@ static char UIScrollViewPullToRefreshView;
     return dateFormatter;
 }
 
-- (UIColor *)arrowColor {
-	return self.arrow.arrowColor; // pass through
-}
-
 - (UIColor *)textColor {
     return self.titleLabel.textColor;
 }
@@ -557,11 +555,6 @@ static char UIScrollViewPullToRefreshView;
 }
 
 #pragma mark - Setters
-
-- (void)setArrowColor:(UIColor *)newArrowColor {
-	self.arrow.arrowColor = newArrowColor; // pass through
-	[self.arrow setNeedsDisplay];
-}
 
 - (void)setTitle:(NSString *)title forState:(SVPullToRefreshState)state {
     if(!title)
